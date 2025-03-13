@@ -1,31 +1,31 @@
 version: '3.8'
 
 services:
-  app:
+  go-app:
     build: .
     ports:
       - "8086:8080"
     environment:
-      - DB_HOST=postgres
+      - DB_HOST=go-postgres
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=stripe
-      - DB_PORT=5432
+      - DB_PORT=6432
     depends_on:
-      - postgres
+      - go-postgres
     networks:
       - stripe-network
     volumes:
       - app_data:/app/data
 
-  postgres:
+  go-postgres:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=stripe
     ports:
-      - "5432:5432"
+      - "6432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

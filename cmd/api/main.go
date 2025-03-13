@@ -11,16 +11,32 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/melnikdev/go-stripe/internal/config"
+	"github.com/melnikdev/go-stripe/internal/database"
 	"github.com/melnikdev/go-stripe/internal/server"
 )
 
 func main() {
+	log.Println("Starting server...")
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
 	config := config.NewConfig()
+
+	db, err := database.NewDB(config)
+
+	if err != nil {
+		log.Fatal("Error connecting to database")
+	}
+
+	err = database.AutoMigrate(db)
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
+
+	log.Println("Database connected")
+
 	server := server.NewServer(config)
 
 	done := make(chan bool, 1)

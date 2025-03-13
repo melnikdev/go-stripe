@@ -1,24 +1,57 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 )
 
 type Config struct {
 	Server *Server
+	DB     *Database
 }
 
 type Server struct {
 	Port int
 }
 
+type Database struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	DBName   string
+	SSLMode  string
+	Timezone string
+}
+
 func NewConfig() *Config {
 	return &Config{
 		Server: &Server{
-			Port: getEnvAsInt("PORT", 8080),
+			Port: getEnvAsInt("SERVER_PORT", 8080),
+		},
+		DB: &Database{
+			Host:     getEnv("DB_HOST", "localhost"),
+			Port:     getEnvAsInt("DB_PORT", 6432),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", "postgres"),
+			DBName:   getEnv("DB_NAME", "stripe"),
+			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+			Timezone: getEnv("DB_TIMEZONE", "Europe/Berlin"),
 		},
 	}
+}
+
+func (c *Config) GetDSN() string {
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s",
+		c.DB.Host,
+		c.DB.User,
+		c.DB.Password,
+		c.DB.DBName,
+		c.DB.Port,
+		c.DB.SSLMode,
+		c.DB.Timezone,
+	)
 }
 
 func getEnv(key string, defaultVal string) string {
