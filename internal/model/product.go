@@ -1,7 +1,9 @@
 package model
 
+import "gorm.io/gorm"
+
 type Product struct {
-	ID       uint   `gorm:"primaryKey"`
+	gorm.Model
 	Name     string `gorm:"unique"`
 	Price    int    `gorm:"not null"`
 	Quantity int    `gorm:"not null"`

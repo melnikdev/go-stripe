@@ -8,15 +8,20 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/melnikdev/go-stripe/internal/config"
+	"github.com/melnikdev/go-stripe/internal/controller"
+	"github.com/melnikdev/go-stripe/internal/service"
+	"gorm.io/gorm"
 )
 
 type Server struct {
 	port int
+	db   *gorm.DB
 }
 
-func NewServer(config *config.Config) *http.Server {
+func NewServer(config *config.Config, db *gorm.DB) *http.Server {
 	NewServer := &Server{
 		port: config.Server.Port,
+		db:   db,
 	}
 
 	server := &http.Server{
@@ -42,6 +47,10 @@ func (s *Server) initServer() http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+
+	productService := service.NewProductService(s.db)
+	productController := controller.NewProductController(productService)
+	e.POST("/products", productController.Create)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

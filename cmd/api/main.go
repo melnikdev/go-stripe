@@ -37,7 +37,7 @@ func main() {
 
 	log.Println("Database connected")
 
-	server := server.NewServer(config)
+	server := server.NewServer(config, db)
 
 	done := make(chan bool, 1)
 
