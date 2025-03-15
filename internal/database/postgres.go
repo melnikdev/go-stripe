@@ -16,5 +16,5 @@ func NewDB(config *config.Config) (*gorm.DB, error) {
 }
 
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(&model.User{}, &model.Product{})
+	return db.AutoMigrate(&model.User{}, &model.Product{}, &model.Price{})
 }

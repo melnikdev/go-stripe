@@ -11,11 +11,13 @@ import (
 
 type ProductController struct {
 	productService service.ProductService
+	client         *stripe.Client
 }
 
-func NewProductController(productService service.ProductService) *ProductController {
+func NewProductController(productService service.ProductService, client *stripe.Client) *ProductController {
 	return &ProductController{
 		productService: productService,
+		client:         client,
 	}
 }
 
@@ -30,12 +32,36 @@ func (c *ProductController) Create(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	client := stripe.NewClient("sk_test_51")
-	_, err = client.CreateProduct(product.Name, int64(product.Price))
+	stripeProduct, err := c.client.CreateProduct(product.Name, int64(request.Price))
+
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	_, err = c.productService.UpdateStripeId(product, stripeProduct.ID)
 
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	return ctx.JSON(http.StatusCreated, "Product created successfully")
+}
+
+func (c *ProductController) GetAll(ctx echo.Context) error {
+	products, err := c.productService.GetAll()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return ctx.JSON(http.StatusOK, products)
+}
+
+func (c *ProductController) GetById(ctx echo.Context) error {
+	id := ctx.Param("id")
+	product, err := c.productService.GetById(id)
+
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, product)
 }

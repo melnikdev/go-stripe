@@ -8,7 +8,10 @@ import (
 )
 
 type ProductService interface {
-	Create(request request.CreateProductRequest) (model.Product, error)
+	Create(request request.CreateProductRequest) (*model.Product, error)
+	UpdateStripeId(product *model.Product, stripeID string) (*model.Product, error)
+	GetAll() ([]model.Product, error)
+	GetById(id string) (*model.Product, error)
 }
 
 type productService struct {
@@ -23,22 +26,65 @@ func NewProductService(db *gorm.DB) ProductService {
 	}
 }
 
-func (s *productService) Create(request request.CreateProductRequest) (model.Product, error) {
+func (s *productService) Create(request request.CreateProductRequest) (*model.Product, error) {
 	err := s.validate.Struct(request)
 	if err != nil {
-		return model.Product{}, err
+		return nil, err
 	}
 
 	product := model.Product{
 		Name:     request.Name,
-		Price:    request.Price,
 		Quantity: request.Quantity,
 	}
 
 	result := s.db.Create(&product)
 	if result.Error != nil {
-		return model.Product{}, result.Error
+		return nil, result.Error
+	}
+
+	price := model.Price{
+		ProductID: product.ID,
+		Amount:    request.Price,
+		Currency:  "usd",
+		Type:      "recurring",
+	}
+
+	result = s.db.Create(&price)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &product, nil
+}
+
+func (s *productService) UpdateStripeId(product *model.Product, stripeID string) (*model.Product, error) {
+
+	result := s.db.Model(&product).Update("stripe_id", stripeID)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return product, nil
+}
+
+func (s *productService) GetAll() ([]model.Product, error) {
+	var products []model.Product
+	result := s.db.Where("stripe_id IS NOT NULL").Find(&products)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return products, nil
+}
+
+func (s *productService) GetById(id string) (*model.Product, error) {
+	var product model.Product
+	result := s.db.Where("id = ?", id).Where("stripe_id IS NOT NULL").Preload("Prices").First(&product)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &product, nil
 }

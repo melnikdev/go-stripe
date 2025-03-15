@@ -10,22 +10,23 @@ import (
 	"github.com/melnikdev/go-stripe/internal/config"
 	"github.com/melnikdev/go-stripe/internal/controller"
 	"github.com/melnikdev/go-stripe/internal/service"
+	"github.com/melnikdev/go-stripe/internal/service/stripe"
 	"gorm.io/gorm"
 )
 
 type Server struct {
-	port int
-	db   *gorm.DB
+	config *config.Config
+	db     *gorm.DB
 }
 
 func NewServer(config *config.Config, db *gorm.DB) *http.Server {
 	NewServer := &Server{
-		port: config.Server.Port,
-		db:   db,
+		config: config,
+		db:     db,
 	}
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
+		Addr:         fmt.Sprintf(":%d", NewServer.config.Server.Port),
 		Handler:      NewServer.initServer(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
@@ -49,8 +50,12 @@ func (s *Server) initServer() http.Handler {
 	}))
 
 	productService := service.NewProductService(s.db)
-	productController := controller.NewProductController(productService)
+	client := stripe.NewClient(s.config.Stripe.SecretKey)
+	productController := controller.NewProductController(productService, client)
+
 	e.POST("/products", productController.Create)
+	e.GET("/products", productController.GetAll)
+	e.GET("/products/:id", productController.GetById)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

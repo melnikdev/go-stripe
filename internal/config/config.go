@@ -9,6 +9,11 @@ import (
 type Config struct {
 	Server *Server
 	DB     *Database
+	Stripe *Stripe
+}
+
+type Stripe struct {
+	SecretKey string
 }
 
 type Server struct {
@@ -38,6 +43,9 @@ func NewConfig() *Config {
 			DBName:   getEnv("DB_NAME", "stripe"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 			Timezone: getEnv("DB_TIMEZONE", "Europe/Berlin"),
+		},
+		Stripe: &Stripe{
+			SecretKey: getEnv("STRIPE_API_KEY", ""),
 		},
 	}
 }
