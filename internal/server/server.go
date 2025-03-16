@@ -53,9 +53,14 @@ func (s *Server) initServer() http.Handler {
 	client := stripe.NewClient(s.config.Stripe.SecretKey)
 	productController := controller.NewProductController(productService, client)
 
+	customerService := service.NewCustomerService(s.db)
+	customerController := controller.NewCustomerController(customerService, client)
+
 	e.POST("/products", productController.Create)
 	e.GET("/products", productController.GetAll)
 	e.GET("/products/:id", productController.GetById)
+
+	e.POST("/customers", customerController.Create)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
