@@ -12,6 +12,7 @@ type ProductService interface {
 	UpdateStripeId(product *model.Product, stripeID string) (*model.Product, error)
 	GetAll() ([]model.Product, error)
 	GetById(id string) (*model.Product, error)
+	CreatePrice(productId uint, priceId string, amount int) (*model.Price, error)
 }
 
 type productService struct {
@@ -38,18 +39,6 @@ func (s *productService) Create(request request.CreateProductRequest) (*model.Pr
 	}
 
 	result := s.db.Create(&product)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	price := model.Price{
-		ProductID: product.ID,
-		Amount:    request.Price,
-		Currency:  "usd",
-		Type:      "recurring",
-	}
-
-	result = s.db.Create(&price)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -87,4 +76,21 @@ func (s *productService) GetById(id string) (*model.Product, error) {
 	}
 
 	return &product, nil
+}
+
+func (s *productService) CreatePrice(productId uint, priceId string, amount int) (*model.Price, error) {
+	price := model.Price{
+		ProductID: productId,
+		PriceID:   priceId,
+		Amount:    amount,
+		Currency:  "usd",
+		Type:      "recurring",
+	}
+
+	result := s.db.Create(&price)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &price, nil
 }

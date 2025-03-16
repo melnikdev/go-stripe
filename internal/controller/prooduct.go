@@ -44,6 +44,12 @@ func (c *ProductController) Create(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
+	_, err = c.productService.CreatePrice(product.ID, stripeProduct.DefaultPrice.ID, request.Price)
+
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
 	return ctx.JSON(http.StatusCreated, "Product created successfully")
 }
 
