@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/melnikdev/go-stripe/internal/model"
 	"github.com/melnikdev/go-stripe/internal/request"
 	"gorm.io/gorm"
@@ -16,22 +15,16 @@ type ProductService interface {
 }
 
 type productService struct {
-	db       *gorm.DB
-	validate *validator.Validate
+	db *gorm.DB
 }
 
 func NewProductService(db *gorm.DB) ProductService {
 	return &productService{
-		db:       db,
-		validate: validator.New(),
+		db: db,
 	}
 }
 
 func (s *productService) Create(request request.CreateProductRequest) (*model.Product, error) {
-	err := s.validate.Struct(request)
-	if err != nil {
-		return nil, err
-	}
 
 	product := model.Product{
 		Name:     request.Name,

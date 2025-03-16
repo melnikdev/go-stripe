@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/melnikdev/go-stripe/internal/request"
 	"github.com/melnikdev/go-stripe/internal/service"
@@ -12,12 +13,14 @@ import (
 type ProductController struct {
 	productService service.ProductService
 	client         *stripe.Client
+	validate       *validator.Validate
 }
 
 func NewProductController(productService service.ProductService, client *stripe.Client) *ProductController {
 	return &ProductController{
 		productService: productService,
 		client:         client,
+		validate:       validator.New(),
 	}
 }
 
@@ -26,6 +29,12 @@ func (c *ProductController) Create(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
+
+	err := c.validate.Struct(request)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+
 	product, err := c.productService.Create(request)
 
 	if err != nil {
