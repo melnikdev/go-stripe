@@ -6,6 +6,7 @@ import (
 	"github.com/stripe/stripe-go/v81/paymentintent"
 	"github.com/stripe/stripe-go/v81/price"
 	"github.com/stripe/stripe-go/v81/product"
+	"github.com/stripe/stripe-go/v81/subscription"
 )
 
 type Client struct {
@@ -28,6 +29,20 @@ func (c *Client) CreateCustomer(email, name string) (*stripe.Customer, error) {
 		Name:  stripe.String(name),
 	}
 	return customer.New(params)
+}
+
+func (c *Client) SubscribeCustomerToPrice(customerID, priceID string) (*stripe.Subscription, error) {
+	params := &stripe.SubscriptionParams{
+		Customer: stripe.String(customerID),
+		Items: []*stripe.SubscriptionItemsParams{
+			{
+				Price: stripe.String(priceID),
+			},
+		},
+		PaymentBehavior: stripe.String("default_incomplete"),
+	}
+	// params.AddExpand("pending_setup_intent")
+	return subscription.New(params)
 }
 
 func (c *Client) CreatePaymentIntent(amount int64, currency string, customerID string) (*stripe.PaymentIntent, error) {

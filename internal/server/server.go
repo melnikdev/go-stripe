@@ -56,11 +56,16 @@ func (s *Server) initServer() http.Handler {
 	customerService := service.NewCustomerService(s.db)
 	customerController := controller.NewCustomerController(customerService, client)
 
+	subscriptionService := service.NewSubscriptionService(s.db)
+	subscriptionController := controller.NewSubscriptionController(subscriptionService, client)
+
 	e.POST("/products", productController.Create)
 	e.GET("/products", productController.GetAll)
 	e.GET("/products/:id", productController.GetById)
 
 	e.POST("/customers", customerController.Create)
+
+	e.POST("/subscriptions", subscriptionController.Create)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
