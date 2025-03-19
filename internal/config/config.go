@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type Stripe struct {
-	SecretKey string
+	SecretKey     string
+	WebhookSecret string
 }
 
 type Server struct {
@@ -37,7 +38,7 @@ func NewConfig() *Config {
 		},
 		DB: &Database{
 			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnvAsInt("DB_PORT", 5432),
+			Port:     getEnvAsInt("DB_PORT", 6432),
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", "postgres"),
 			DBName:   getEnv("DB_NAME", "stripe"),
@@ -45,7 +46,8 @@ func NewConfig() *Config {
 			Timezone: getEnv("DB_TIMEZONE", "Europe/Berlin"),
 		},
 		Stripe: &Stripe{
-			SecretKey: getEnv("STRIPE_API_KEY", ""),
+			SecretKey:     getEnv("STRIPE_API_KEY", ""),
+			WebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET", ""),
 		},
 	}
 }

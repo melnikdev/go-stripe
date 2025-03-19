@@ -50,14 +50,19 @@ func (s *Server) initServer() http.Handler {
 	}))
 
 	productService := service.NewProductService(s.db)
-	client := stripe.NewClient(s.config.Stripe.SecretKey)
-	productController := controller.NewProductController(productService, client)
+	stripeClient := stripe.NewClient(
+		s.config.Stripe.SecretKey,
+		s.config.Stripe.WebhookSecret,
+	)
+	productController := controller.NewProductController(productService, stripeClient)
 
 	customerService := service.NewCustomerService(s.db)
-	customerController := controller.NewCustomerController(customerService, client)
+	customerController := controller.NewCustomerController(customerService, stripeClient)
 
 	subscriptionService := service.NewSubscriptionService(s.db)
-	subscriptionController := controller.NewSubscriptionController(subscriptionService, client)
+	subscriptionController := controller.NewSubscriptionController(subscriptionService, stripeClient)
+
+	webhookController := controller.NewWebhookController(stripeClient)
 
 	e.POST("/products", productController.Create)
 	e.GET("/products", productController.GetAll)
@@ -66,6 +71,8 @@ func (s *Server) initServer() http.Handler {
 	e.POST("/customers", customerController.Create)
 
 	e.POST("/subscriptions", subscriptionController.Create)
+
+	e.POST("/webhooks", webhookController.HandleWebhook)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

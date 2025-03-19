@@ -1,25 +1,59 @@
 package stripe
 
 import (
+	"encoding/json"
+
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/customer"
 	"github.com/stripe/stripe-go/v81/paymentintent"
 	"github.com/stripe/stripe-go/v81/price"
 	"github.com/stripe/stripe-go/v81/product"
 	"github.com/stripe/stripe-go/v81/subscription"
+	"github.com/stripe/stripe-go/v81/webhook"
 )
 
 type Client struct {
-	secretKey string
-	// webhookSecret string
+	secretKey     string
+	webhookSecret string
 }
 
-func NewClient(secretKey string) *Client {
+func NewClient(secretKey, webhookSecret string) *Client {
 	stripe.Key = secretKey
-
 	return &Client{
-		secretKey: secretKey,
-		// webhookSecret: webhookSecret,
+		secretKey:     secretKey,
+		webhookSecret: webhookSecret,
+	}
+}
+
+func (c *Client) HandleWebhook(payload []byte, signature string) (*stripe.Event, error) {
+	event, err := webhook.ConstructEvent(payload, signature, c.webhookSecret)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+func (c *Client) ParseSubscriptionEvent(event *stripe.Event) (interface{}, error) {
+	switch event.Type {
+	case "customer.subscription.created":
+		var subscription stripe.Subscription
+		err := json.Unmarshal(event.Data.Raw, &subscription)
+		return &subscription, err
+
+	case "customer.subscription.updated":
+		var subscription stripe.Subscription
+		err := json.Unmarshal(event.Data.Raw, &subscription)
+		return &subscription, err
+
+	case "customer.subscription.deleted":
+		var subscription stripe.Subscription
+		err := json.Unmarshal(event.Data.Raw, &subscription)
+		return &subscription, err
+
+	default:
+		return nil, nil
 	}
 }
 
